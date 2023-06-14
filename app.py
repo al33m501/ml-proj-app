@@ -3,7 +3,8 @@ import dash_core_components as dcc
 import dash_html_components as html
 import plotly.graph_objects as go
 
-app = dash.Dash()
+app = dash.Dash(__name__)
+server = app.server
 
 fig_names = ['fig1', 'fig2']
 fig_dropdown = html.Div([
