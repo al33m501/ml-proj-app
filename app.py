@@ -1,33 +1,42 @@
-import dash
-import dash_core_components as dcc
-import dash_html_components as html
-import plotly.graph_objects as go
+from dash import Dash, dcc, html, Input, Output
+import pandas as pd
+import plotly.express as px
+import ssl
 
-app = dash.Dash(__name__)
+ssl._create_default_https_context = ssl._create_unverified_context
+
+
+mydataset = "https://raw.githubusercontent.com/plotly/datasets/master/volcano_db.csv"
+
+df = pd.read_csv(mydataset, encoding="latin")
+df.dropna(inplace=True)
+df["Elev"] = abs(df["Elev"])
+
+app = Dash(__name__)
 server = app.server
 
-fig_names = ['fig1', 'fig2']
-fig_dropdown = html.Div([
-    dcc.Dropdown(
-        id='fig_dropdown',
-        options=[{'label': x, 'value': x} for x in fig_names],
-        value=None
-    )])
-fig_plot = html.Div(id='fig_plot')
-app.layout = html.Div([fig_dropdown, fig_plot])
 
-@app.callback(
-dash.dependencies.Output('fig_plot', 'children'),
-[dash.dependencies.Input('fig_dropdown', 'value')])
-def update_output(fig_name):
-    return name_to_figure(fig_name)
+app.layout = html.Div([
+    html.Header("Volcano Map Dash App", style={"fontSize": 40,
+                                               "textAlign": "center"}),
+    dcc.Dropdown(id="mydropdown",
+                 options=df["Type"].unique(),
+                 value="Stratovolcano",
+                 style={"width": "50%", "margin-left": "130px", "margin-top": "60px"}),
+    dcc.Graph(id="my_scatter_geo")
+])
 
-def name_to_figure(fig_name):
-    figure = go.Figure()
-    if fig_name == 'fig1':
-        figure.add_trace(go.Scatter(y=[4, 2, 1]))
-    elif fig_name == 'fig2': 
-        figure.add_trace(go.Bar(y=[2, 1, 3]))
-    return dcc.Graph(figure=figure)
 
-app.run_server(debug=True, use_reloader=False, port=8051)
+@app.callback(Output("my_scatter_geo", "figure"),
+              Input("mydropdown", "value"))
+def sync_input(volcano_selection):
+    fig = px.scatter_geo(df.loc[df["Type"] == volcano_selection],
+                         lat="Latitude",
+                         lon="Longitude",
+                         size="Elev",
+                         hover_name="Volcano Name")
+    return fig
+
+
+if __name__ == "__main__":
+    app.run_server(debug=False)
