@@ -39,4 +39,5 @@ def sync_input(volcano_selection):
 
 
 if __name__ == "__main__":
-    app.run_server(debug=False)
+    app=Dash(__name__)   
+    server=app.server
